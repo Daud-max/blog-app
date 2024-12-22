@@ -11,6 +11,7 @@ import Register from "../src/pages/Register";
 import Dashboard from "../src/pages/Dashboard";
 import Creator from "../src/pages/Creator";
 import { useAuth } from "./context/AuthProvider";
+import { Toaster } from "react-hot-toast";
 function App() {
   const location = useLocation();
   const hideNavbarFooter = ["/dashboard", "/login", "/register"].includes(
@@ -22,7 +23,7 @@ function App() {
     <div>
       {!hideNavbarFooter && <Navbar />}
       <Routes>
-        {/* <Route path="/" element={<Home />} /> */}
+        <Route path="/" element={<Home />} />
         <Route path="/Blogs" element={<Blogs />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
@@ -31,7 +32,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
-      {/* {!hideNavbarFooter && <Footer />} */}
+      <Toaster />
+      {!hideNavbarFooter && <Footer />}
     </div>
   );
 }
