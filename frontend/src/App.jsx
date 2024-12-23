@@ -13,10 +13,12 @@ import Creator from "../src/pages/Creator";
 import { useAuth } from "./context/AuthProvider";
 import { Toaster } from "react-hot-toast";
 function App() {
+  // This helps in selectively showing or hiding parts of your UI (like the navbar or footer) based on the page
   const location = useLocation();
   const hideNavbarFooter = ["/dashboard", "/login", "/register"].includes(
     location.pathname
   );
+  
   const { blogs } = useAuth();
   console.log(blogs);
   return (
