@@ -1,7 +1,8 @@
 import { User } from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
 import bcrypt from "bcryptjs";
-import createTokenAndSaveCookies from "../jwt/authToken.js";
+import createTokenAndSaveCookies from "../jwt/AuthToken.js";
+
 export const register = async (req, res) => {
   try {
     if (!req.files || Object.keys(req.files).length === 0) {
@@ -10,18 +11,18 @@ export const register = async (req, res) => {
     const { photo } = req.files;
     const allowedFormats = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedFormats.includes(photo.mimetype)) {
-      return res
-        .status(400)
-        .json({ message: "Invalid photo format.Only jpg and png are allowed" });
+      return res.status(400).json({
+        message: "Invalid photo format. Only jpg and png are allowed",
+      });
     }
-    const { name, password, role, education, phone, email } = req.body;
+    const { email, name, password, phone, education, role } = req.body;
     if (
       !email ||
       !name ||
       !password ||
-      !role ||
-      !education ||
       !phone ||
+      !education ||
+      !role ||
       !photo
     ) {
       return res.status(400).json({ message: "Please fill required fields" });
@@ -30,7 +31,7 @@ export const register = async (req, res) => {
     if (user) {
       return res
         .status(400)
-        .json({ message: "User already registed with this email" });
+        .json({ message: "User already exists with this email" });
     }
     const cloudinaryResponse = await cloudinary.uploader.upload(
       photo.tempFilePath
@@ -40,12 +41,12 @@ export const register = async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
+      email,
       name,
       password: hashedPassword,
-      role,
-      education,
       phone,
-      email,
+      education,
+      role,
       photo: {
         public_id: cloudinaryResponse.public_id,
         url: cloudinaryResponse.url,
@@ -53,17 +54,28 @@ export const register = async (req, res) => {
     });
     await newUser.save();
     if (newUser) {
-      const token = await createTokenAndSaveCookies(newUser._id, res);
-      console.log("registed Token:", token);
-      res
-        .status(201)
-        .json({ message: "User created successfully", newUser, token: token });
+      let token = await createTokenAndSaveCookies(newUser._id, res);
+      console.log("Singup: ", token);
+      res.status(201).json({
+        message: "User registered successfully",
+        user: {
+          id: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+          education: newUser.education,
+          avatar: newUser.avatar,
+          createdOn: newUser.createdOn,
+        },
+        token: token,
+      });
     }
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ error: "Internal Server error" });
   }
 };
+
 export const login = async (req, res) => {
   const { email, password, role } = req.body;
   try {
@@ -71,9 +83,11 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Please fill required fields" });
     }
     const user = await User.findOne({ email }).select("+password");
+    console.log(user);
     if (!user.password) {
-      return res.status(400).json({ message: "password is missing" });
+      return res.status(400).json({ message: "User password is missing" });
     }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!user || !isMatch) {
       return res.status(400).json({ message: "Invalid email or password" });
@@ -81,10 +95,10 @@ export const login = async (req, res) => {
     if (user.role !== role) {
       return res.status(400).json({ message: `Given role ${role} not found` });
     }
-    const token = await createTokenAndSaveCookies(user._id, res);
-    console.log("log in :", token);
+    let token = await createTokenAndSaveCookies(user._id, res);
+    console.log("Login: ", token);
     res.status(200).json({
-      message: "User Logged in succusfully",
+      message: "User logged in successfully",
       user: {
         _id: user._id,
         name: user.name,
@@ -95,22 +109,26 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal Server error" });
   }
 };
-export const logout = async (req, res) => {
+
+export const logout = (req, res) => {
   try {
     res.clearCookie("jwt");
-    res.status(200).json({ message: "user logged out succussfully" });
+    res.status(200).json({ message: "User logged out successfully" });
   } catch (error) {
-    return res.status(500).json({ error: "Internal server error" });
+    console.log(error);
+    return res.status(500).json({ error: "Internal Server error" });
   }
 };
+
 export const getMyProfile = async (req, res) => {
   const user = await req.user;
-  res.status(200).json(user);
+  res.status(200).json({ user });
 };
-export const getAllAdmins = async (req, res) => {
+
+export const getAdmins = async (req, res) => {
   const admins = await User.find({ role: "admin" });
-  res.status(200).json(admins);
+  res.status(200).json({ admins });
 };

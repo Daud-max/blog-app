@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    validate: [validator.isEmail, "Please enter a valid Email"],
+    validate: [validator.isEmail, "Please enter a valid email"],
   },
   phone: {
     type: Number,
@@ -39,14 +39,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     select: false,
-    minlenth: 8,
+    minlength: 8,
+  },
+  token: {
+    type: String,
   },
   createdAt: {
     type: Date,
     default: Date.now,
-  },
-  token: {
-    type: String,
   },
 });
 export const User = mongoose.model("User", userSchema);
